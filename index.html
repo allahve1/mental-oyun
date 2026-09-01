@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mental Aritmetika</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+body { background: #0f172a; color: white; font-family: Arial; text-align: center; padding: 20px; }
+.card { background: #1e293b; padding: 30px; border-radius: 20px; max-width: 400px; margin: auto; }
+h1 { font-size: 24px; }
+.level { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+.level button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.asan { background: #16a34a; }
+.orta { background: #f59e0b; }
+.cetin { background: #dc2626; }
+.active { border: 2px solid white; }
+.misal { font-size: 48px; margin: 20px 0; }
+input { width: 80%; padding: 12px; font-size: 20px; border-radius: 10px; border: none; text-align: center; }
+.btn { padding: 12px 16px; margin: 6px; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; }
+.gonder { background: #2563eb; color: white; }
+.kamera { background: #16a34a; color: white; }
+.mikrofon { background: #f59e0b; color: white; }
+.ses { background: #64748b; color: white; }
+#video { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
+#status { margin-top: 10px; font-size: 14px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🧮 Mental Aritmetika</h1>
+  <div class="level">
+    <button class="asan active" onclick="setLevel('asan')">Asan</button>
+    <button class="orta" onclick="setLevel('orta')">Orta</button>
+    <button class="cetin" onclick="setLevel('cetin')">Çətin</button>
+  </div>
+  <p>Hesab: <span id="hesab">0/10</span></p>
+  <div class="misal" id="misal">5 + 3</div>
+  <input type="text" id="cavab" placeholder="Cavabı yaz">
+  <br>
+  <button class="btn gonder" onclick="yoxla()">Göndər</button>
+  <button class="btn kamera" onclick="kameraAc()">📷 Kamera</button>
+  <button class="btn mikrofon" onclick="mikrofonAc()">🎤 Səs</button>
+  <button class="btn ses" onclick="sesToggle()">🔊 AÇIQ</button>
+  <video id="video" autoplay></video>
+  <button id="sekilBtn" class="btn kamera" style="display:none;" onclick="sekilCek()">📸 Çək</button>
+  <p id="status"></p>
+</div>
+<script>
+let hesab = 0; let umumi = 10; let sesAcik = true; let level = 'asan'; let recognition;
+function setLevel(l) { level = l; document.querySelectorAll('.level button').forEach(b => b.classList.remove('active')); document.querySelector('.' + l).classList.add('active'); yeniMisal(); }
+function yeniMisal() { let a, b; if(level === 'asan') { a = Math.floor(Math.random()*10); b = Math.floor(Math.random()*10); } if(level === 'orta') { a = Math.floor(Math.random()*50); b = Math.floor(Math.random()*50); } if(level === 'cetin') { a = Math.floor(Math.random()*100); b = Math.floor(Math.random()*100); } document.getElementById('misal').innerText = `${a} + ${b}`; }
+async function kameraAc() { document.getElementById('video').style.display = 'block'; document.getElementById('sekilBtn').style.display = 'inline-block'; document.getElementById('status').innerText = "Kamera açılır..."; const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); document.getElementById('video').srcObject = stream; }
+async function sekilCek() { document.getElementById('status').innerText = "Oxuyuram..."; const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); const { data: { text } } = await Tesseract.recognize(canvas, 'eng'); document.getElementById('misal').innerText = text.replace(/\n/g, ' '); document.getElementById('status').innerText = "Misal tapıldı!"; video.srcObject.getTracks().forEach(track => track.stop()); document.getElementById('video').style.display = 'none'; document.getElementById('sekilBtn').style.display = 'none'; }
+function mikrofonAc() { if (!('webkitSpeechRecognition' in window)) { alert("Telefonun səsi dəstəkləmir"); return; } recognition = new webkitSpeechRecognition(); recognition.lang = 'az-AZ'; recognition.start(); document.getElementById('status').innerText = "Danış..."; recognition.onresult = (event) => { let soz = event.results[0][0].transcript; document.getElementById('cavab').value = soz.replace(/\D/g,''); document.getElementById('status').innerText = "Cavab: " + soz; } }
+function sesToggle() { sesAcik =!sesAcik; document.querySelector('.ses').innerText = sesAcik? "🔊 AÇIQ" : "🔇 BAĞLI"; }
+function yoxla() { let cavab = document.getElementById('cavab').value; let misal = document.getElementById('misal').innerText; let duzgun = eval(misal); if(parseInt(cavab) === duzgun) { hesab++; if(sesAcik) speechSynthesis.speak(new SpeechSynthesisUtterance("Doğrudur")); } else { if(sesAcik) speechSynthesis.speak(new SpeechSynthesisUtterance("Səhvdir")); } document.getElementById('hesab').innerText = hesab + "/10"; document.getElementById('cavab').value = ""; yeniMisal(); }
+yeniMisal();
+</script>
+</body>
+</html>
